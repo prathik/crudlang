@@ -83,7 +83,7 @@ string makeSetter(string type, string name) {
     return result;
 }
 
-void createHibernateConfig(string hibernateMapping) {
+void createHibernateConfig(string hibernateMapping, string directory) {
     string hibInit = "";
     hibInit = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
     hibInit += "<!DOCTYPE hibernate-configuration SYSTEM\n";
@@ -110,7 +110,7 @@ void createHibernateConfig(string hibernateMapping) {
     hibInit +="        </property>\n";
     hibInit +="        <property name=\"show_sql\">true</property>\n";
     ofstream mf;
-    mf.open ("./out/main/resource/hibernate.cfg.xml");
+    mf.open ("./"+directory+"/main/resource/hibernate.cfg.xml");
     mf << hibInit;
     mf << hibernate;
     mf << "    </session-factory>\n";
@@ -119,10 +119,16 @@ void createHibernateConfig(string hibernateMapping) {
     
 }
 
-int main(int, char**) {
-    boost::filesystem::path p = "./out/";
-    boost::filesystem::path r = "./out/main/resource/";
-    boost::filesystem::path src = "./out/main/src/java/";
+int main(int argc, char** argv) {
+    string directory;
+    if(argc == 1) {
+        directory = "out";
+    } else {
+        directory = argv[1];
+    }
+    boost::filesystem::path p = "./"+directory+"/";
+    boost::filesystem::path r = "./"+directory+"/main/resource/";
+    boost::filesystem::path src = "./"+directory+"/main/src/java/";
     boost::filesystem::remove_all(p);
 
     boost::filesystem::create_directory(p);
@@ -144,18 +150,18 @@ int main(int, char**) {
         yyparse();
     } while (!feof(yyin));
 
-    createHibernateConfig(hibernate);
+    createHibernateConfig(hibernate, directory);
     for(auto elem: classMap) {
         ofstream mf;
         string fileName = elem.first;
-        mf.open ("./out/main/src/java/" + fileName + ".java");
+        mf.open ("./"+directory+"/main/src/java/" + fileName + ".java");
         mf << elem.second;
         mf.close();
     }
  for(auto elem: hibFiles) {
         ofstream mf;
         string fileName = elem.first;
-        mf.open ("./out/main/resource/" + fileName + ".hbm.xml");
+        mf.open ("./"+directory+"/main/resource/" + fileName + ".hbm.xml");
         mf << elem.second;
         mf.close();
     }
