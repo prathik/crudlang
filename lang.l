@@ -8,7 +8,7 @@ using namespace std;
 
 %}
 %%
-[ \t]           ;
+[ \t\n]           ;
 [;]     {
         return SCOLON;
         }
