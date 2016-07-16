@@ -7,6 +7,7 @@
 #include "makers.hpp"
 #include "hibernate.hpp"
 #include "help.hpp"
+#include "classwriter.hpp"
 
 using namespace std;
 
@@ -16,7 +17,6 @@ extern "C" int yyparse();
 extern "C" FILE *yyin;
 
 void yyerror(const char *s);
-std::map<string, string> classMap;
 string hibernate;
 string hibtype;
 string directory;
@@ -37,13 +37,12 @@ clang: class SCOLON clang
      ;
 
 class: cname types { 
-     string cname = $1;
+    string cname = $1;
     string types = $2;
     string classFile = "class " + cname + " { \n" + types + "}";
-    classMap[cname] = classFile;
+    writeClass("./"+directory+"/src/main/java/" + cname + ".java", classFile);
     createMappingFile("./"+directory+"/src/main/resource/" +
             cname + ".hbm.xml", cname, hibtype);
-
     hibernate += "        <mapping resource=\""+cname+".hbm.xml\"/>\n";
 
 }
@@ -53,16 +52,16 @@ types: type types
      | type
     ;
 type: STRING COLON STRING { 
-    string dataType = $3;
-    string name = $1;
-    hibtype += "<property type=\""+hibernateDatatype(dataType)
-                    +"\" name=\""+name+"\"/>\n";
-    string final = "    " + dataType + " " + name + ";\n";
-    final += makeGetter($3, $1) + "\n";
-    final += makeSetter($3, $1) + "\n";
-    delete $$;
-    $$ = new char[final.length()];
-    strcpy($$, final.c_str());
+        string dataType = $3;
+        string name = $1;
+        hibtype += "<property type=\""+hibernateDatatype(dataType)
+                        +"\" name=\""+name+"\"/>\n";
+        string final = "    " + dataType + " " + name + ";\n";
+        final += makeGetter($3, $1) + "\n";
+        final += makeSetter($3, $1) + "\n";
+        delete $$;
+        $$ = new char[final.length()];
+        strcpy($$, final.c_str());
     }
     ;
 cname:
@@ -99,13 +98,6 @@ int main(int argc, char** argv) {
     } while (!feof(yyin));
 
     createHibernateConfig(hibernate, directory);
-    for(auto elem: classMap) {
-        ofstream mf;
-        string fileName = elem.first;
-        mf.open ("./"+directory+"/src/main/java/" + fileName + ".java");
-        mf << elem.second;
-        mf.close();
-    }
 }
 
 void yyerror(const char *s) {
